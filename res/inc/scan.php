@@ -169,6 +169,24 @@ Scan Image
 <input type="submit" value="Scan Image" name="action"> <input name="reset" type="reset" value="Reset Options" onclick="clearRegion(ias,false);setTimeout(scanReset,1);"/></p>
 </div>
 
+<div class="side_box">
+	<h2>Output target</h2>
+	<p class="center">
+		<select name='output_target'>
+			<option value='default'>Default directory</option>
+<?php
+	foreach(scandir('/media/WD_3TB/Nextcloud/') as $dirElement) {
+		if(substr($dirElement, 0, 8) == 'appdata_' 
+		|| strpos($dirElement, '.') !== false
+		|| $dirElement == 'files_external') {
+			echo "<option value='" . $dirElement . "'>" . $dirElement . "</option>";
+		}
+	}
+?>
+		</select>
+	</p>
+</div>
+
 <!-- Save Settings -->
 <div class="side_box">
 <h2>Settings</h2>
