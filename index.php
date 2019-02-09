@@ -1329,22 +1329,34 @@ else{
 				exe("convert $SCAN -scale '$SCALE%' $SCAN",true);
 			}
 
+			require '../nextcloud/config/config.php';
+
+			$OUTPUT_TARGET = $_POST["output_target"];
+
 			# Generate Preview Image
-			exe("convert $SCAN -scale '450x471' ".shell("scans/thumb/$P_FILENAME"),true);
+            if($OUTPUT_TARGET == "default") {
+			    exe("convert $SCAN -scale '450x471' ".shell("scans/thumb/$P_FILENAME"),true);
+
+                $OUTPUT_DIRECTORY = "scans/file";
+            }
+            else {
+                $OUTPUT_DIRECTORY = $CONFIG["datadirectory"] . $OUTPUT_TARGET . "/files/Scans";
+            }
 
 			# Convert scan to file type
 			if($FILETYPE=="txt"){
 				$S_FILENAMET=substr($S_FILENAME,0,strrpos($S_FILENAME,'.'));
 				exe("convert $SCAN -fx '(r+g+b)/3' ".shell("/tmp/_scan_file$SCANNER.tif"),true);
-				exe("tesseract ".shell("/tmp/_scan_file$SCANNER.tif").' '.shell("scans/file/$S_FILENAMET")." -l ".shell($LANG),true);
+				exe("tesseract ".shell("/tmp/_scan_file$SCANNER.tif").' '.shell($OUTPUT_DIRECTORY . "/$S_FILENAMET")." -l ".shell($LANG),true);
 				unlink("/tmp/_scan_file$SCANNER.tif");
-				if(!file_exists("scans/file/$S_FILENAMET.txt"))//in case tesseract fails
-					SaveFile("scans/file/$S_FILENAMET.txt","");
+				if(!file_exists($OUTPUT_DIRECTORY . "/$S_FILENAMET.txt"))//in case tesseract fails
+					SaveFile($OUTPUT_DIRECTORY . "/$S_FILENAMET.txt","");
 			}
 			else{
-				exe("convert $SCAN -alpha off ".shell("scans/file/$S_FILENAME"),true);
+				exe("convert $SCAN -alpha off ".shell($OUTPUT_DIRECTORY . "/$S_FILENAME"),true);
 			}
 			@unlink("$CANDIR/".$files[$i]);
+			shell_exec('php ../nextcloud/occ files:scan --path="' . $OUTPUT_DIRECTORY . '"');
 		}
 		@rmdir($CANDIR);
 		$endTime=time();

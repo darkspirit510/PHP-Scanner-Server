@@ -162,14 +162,6 @@ Select Region
 </div>
 
 <div class="side_box">
-<h2>
-Scan Image
-</h2>
-<p class="center"><input type="hidden" name="page" value="Scan"/>
-<input type="submit" value="Scan Image" name="action"> <input name="reset" type="reset" value="Reset Options" onclick="clearRegion(ias,false);setTimeout(scanReset,1);"/></p>
-</div>
-
-<div class="side_box">
 	<h2>Output target</h2>
 	<p class="center">
 		<select name='output_target'>
@@ -178,14 +170,22 @@ Scan Image
 	require '/var/www/html/nextcloud/config/config.php';
 	
 	$pdo = new PDO('mysql:host=' . $CONFIG["dbhost"] . ';dbname=' . $CONFIG["dbname"], $CONFIG["dbuser"], $CONFIG["dbpassword"]);
-	$sql = "SELECT uid FROM oc_users";
+	$sql = "SELECT uid FROM oc_users ORDER BY uid ASC";
 	
 	foreach ($pdo->query($sql) as $row) {
-		echo "<option value='" . $row["uid"] . "'>" . $row["uid"] . "</option>";
+		echo "<option value='" . $row["uid"] . "'>Nextcloud - " . $row["uid"] . "</option>";
 	}
 ?>
 		</select>
 	</p>
+</div>
+
+<div class="side_box">
+<h2>
+Scan Image
+</h2>
+<p class="center"><input type="hidden" name="page" value="Scan"/>
+<input type="submit" value="Scan Image" name="action"> <input name="reset" type="reset" value="Reset Options" onclick="clearRegion(ias,false);setTimeout(scanReset,1);"/></p>
 </div>
 
 <!-- Save Settings -->
