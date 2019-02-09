@@ -175,12 +175,13 @@ Scan Image
 		<select name='output_target'>
 			<option value='default'>Default directory</option>
 <?php
-	foreach(scandir('/media/WD_3TB/Nextcloud/') as $dirElement) {
-		if(substr($dirElement, 0, 8) == 'appdata_' 
-		|| strpos($dirElement, '.') !== false
-		|| $dirElement == 'files_external') {
-			echo "<option value='" . $dirElement . "'>" . $dirElement . "</option>";
-		}
+	require '/var/www/html/nextcloud/config/config.php';
+	
+	$pdo = new PDO('mysql:host=' . $CONFIG["dbhost"] . ';dbname=' . $CONFIG["dbname"], $CONFIG["dbuser"], $CONFIG["dbpassword"]);
+	$sql = "SELECT uid FROM oc_users";
+	
+	foreach ($pdo->query($sql) as $row) {
+		echo "<option value='" . $row["uid"] . "'>" . $row["uid"] . "</option>";
 	}
 ?>
 		</select>
