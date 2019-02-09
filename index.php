@@ -1358,7 +1358,7 @@ else{
 			@unlink("$CANDIR/".$files[$i]);
 
             if($OUTPUT_TARGET != "default") {
-                exe('php ../nextcloud/occ files:scan --path="' . $OUTPUT_DIRECTORY . '"', true);
+                exe('php ../nextcloud/occ files:scan --path="/' . $OUTPUT_TARGET . "/files/Scans" . '"', true);
             }
 		}
 		@rmdir($CANDIR);
