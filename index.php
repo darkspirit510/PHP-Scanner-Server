@@ -1356,7 +1356,10 @@ else{
 				exe("convert $SCAN -alpha off ".shell($OUTPUT_DIRECTORY . "/$S_FILENAME"),true);
 			}
 			@unlink("$CANDIR/".$files[$i]);
-			shell_exec('php ../nextcloud/occ files:scan --path="' . $OUTPUT_DIRECTORY . '"');
+
+            if($OUTPUT_TARGET != "default") {
+                exe('php ../nextcloud/occ files:scan --path="' . $OUTPUT_DIRECTORY . '"', true);
+            }
 		}
 		@rmdir($CANDIR);
 		$endTime=time();

@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="6216fb45-0df1-4737-9a2b-12419a3adad3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/index.php" beforeDir="false" afterPath="$PROJECT_DIR$/index.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/res/inc/scan.php" beforeDir="false" afterPath="$PROJECT_DIR$/res/inc/scan.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -25,8 +24,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/index.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="661">
-              <caret line="1358" column="85" selection-start-line="1358" selection-start-column="85" selection-end-line="1358" selection-end-column="85" />
+            <state relative-caret-position="757">
+              <caret line="1361" column="12" selection-start-line="1361" selection-start-column="12" selection-end-line="1361" selection-end-column="12" />
               <folding>
                 <element signature="n#style#0;n#ul#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#td#0;n#tr#0;n#!!top" expanded="true" />
@@ -54,6 +53,8 @@
       <find>sc</find>
       <find>scans/file</find>
       <find>OUTPUT_DI</find>
+      <find>OUTPUT_DIR</find>
+      <find>OUTPUT_DIRE</find>
     </findStrings>
     <dirStrings>
       <dir>C:\Users\Sascha\Documents\Programmierung\PHP\PHP-Scanner-Server\res</dir>
@@ -124,12 +125,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1549712844059</updated>
-      <workItem from="1549712849345" duration="3310000" />
+      <workItem from="1549712849345" duration="5075000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="3310000" />
+    <option name="totallyTimeSpent" value="5075000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="-7" width="2062" height="1126" extended-state="6" />
@@ -185,8 +186,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/index.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="661">
-          <caret line="1358" column="85" selection-start-line="1358" selection-start-column="85" selection-end-line="1358" selection-end-column="85" />
+        <state relative-caret-position="757">
+          <caret line="1361" column="12" selection-start-line="1361" selection-start-column="12" selection-end-line="1361" selection-end-column="12" />
           <folding>
             <element signature="n#style#0;n#ul#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#td#0;n#tr#0;n#!!top" expanded="true" />
