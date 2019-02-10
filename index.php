@@ -1305,6 +1305,13 @@ else{
 
         $OUTPUT_TARGET = $_POST["output_target"];
 
+        if($OUTPUT_TARGET == "default") {
+            $OUTPUT_DIRECTORY = "scans/file";
+        }
+        else {
+            $OUTPUT_DIRECTORY = $CONFIG["datadirectory"] . $OUTPUT_TARGET . "/files/Scans";
+        }
+
 		for($i=2,$ct=count($files);$i<$ct;$i++){
 			$SCAN=shell("$CANDIR/".$files[$i]);
 
@@ -1336,12 +1343,7 @@ else{
 
 			# Generate Preview Image
             if($OUTPUT_TARGET == "default") {
-			    exe("convert $SCAN -scale '450x471' ".shell("scans/thumb/$P_FILENAME"),true);
-
-                $OUTPUT_DIRECTORY = "scans/file";
-            }
-            else {
-                $OUTPUT_DIRECTORY = $CONFIG["datadirectory"] . $OUTPUT_TARGET . "/files/Scans";
+                exe("convert $SCAN -scale '450x471' " . shell("scans/thumb/$P_FILENAME"), true);
             }
 
 			# Convert scan to file type
@@ -1384,7 +1386,7 @@ else{
 			($ROTATE!="0"?"var p=document.createElement('p');p.innerHTML='<small>Changing orientation will void select region.</small>';getID('opt').appendChild(p);":'').
 			"$(document).ready(function(){document.scanning.scanner.disabled=true;".(isset($strip)?"stripSelect();":'')."});</script>";
 		# Check if image is empty and post error, otherwise post image to page
-		if(!file_exists("scans/thumb/$P_FILENAME")){
+		if($OUTPUT_TARGET == "default" && !file_exists("scans/thumb/$P_FILENAME")){
 			Print_Message("Could not scan",'<p style="text-align:left;margin:0;">This is can be cauesed by one or more of the following:</p>'.
 				'<ul><li>The scanner is not on.</li><li>The scanner is not connected to the computer.</li>'.
 				'<li>You need to run the <a href="index.php?page=Access%20Enabler">Access Enabler</a>.</li>'.
