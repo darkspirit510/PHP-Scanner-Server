@@ -1300,6 +1300,11 @@ else{
 			$GMT=intval(exe('date +%z',true))*36;
 			exe('echo "Warning, Guessing Time Zone:\n\tGuessed as GMT '.($GMT/60/60).'.\n\tdate.timezone is not set in your /etc/php5/apache2/php.ini file.\n\tIt is probably set on line 880.\n\tThere is also a override in '.getcwd().'/config.ini on line 11."',true);
 		}
+
+        require '../nextcloud/config/config.php';
+
+        $OUTPUT_TARGET = $_POST["output_target"];
+
 		for($i=2,$ct=count($files);$i<$ct;$i++){
 			$SCAN=shell("$CANDIR/".$files[$i]);
 
@@ -1329,10 +1334,6 @@ else{
 				exe("convert $SCAN -scale '$SCALE%' $SCAN",true);
 			}
 
-			require '../nextcloud/config/config.php';
-
-			$OUTPUT_TARGET = $_POST["output_target"];
-
 			# Generate Preview Image
             if($OUTPUT_TARGET == "default") {
 			    exe("convert $SCAN -scale '450x471' ".shell("scans/thumb/$P_FILENAME"),true);
@@ -1356,11 +1357,12 @@ else{
 				exe("convert $SCAN -alpha off ".shell($OUTPUT_DIRECTORY . "/$S_FILENAME"),true);
 			}
 			@unlink("$CANDIR/".$files[$i]);
-
-            if($OUTPUT_TARGET != "default") {
-                exe('php ../nextcloud/occ files:scan --path="/' . $OUTPUT_TARGET . "/files/Scans" . '"', true);
-            }
 		}
+
+        if($OUTPUT_TARGET != "default") {
+            exe('php ../nextcloud/occ files:scan --path="/' . $OUTPUT_TARGET . "/files/Scans" . '"', true);
+        }
+
 		@rmdir($CANDIR);
 		$endTime=time();
 

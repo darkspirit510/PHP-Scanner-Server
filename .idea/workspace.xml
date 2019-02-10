@@ -24,8 +24,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/index.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="282">
-              <caret line="1360" column="97" selection-start-line="1360" selection-start-column="97" selection-end-line="1360" selection-end-column="97" />
+            <state relative-caret-position="357">
+              <caret line="1363" column="9" selection-start-line="1363" selection-start-column="9" selection-end-line="1363" selection-end-column="9" />
               <folding>
                 <element signature="n#style#0;n#ul#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#td#0;n#tr#0;n#!!top" expanded="true" />
@@ -125,12 +125,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1549712844059</updated>
-      <workItem from="1549712849345" duration="5733000" />
+      <workItem from="1549712849345" duration="6373000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="5733000" />
+    <option name="totallyTimeSpent" value="6373000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="-7" width="2062" height="1126" extended-state="6" />
@@ -186,8 +186,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/index.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="282">
-          <caret line="1360" column="97" selection-start-line="1360" selection-start-column="97" selection-end-line="1360" selection-end-column="97" />
+        <state relative-caret-position="357">
+          <caret line="1363" column="9" selection-start-line="1363" selection-start-column="9" selection-end-line="1363" selection-end-column="9" />
           <folding>
             <element signature="n#style#0;n#ul#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#td#0;n#tr#0;n#!!top" expanded="true" />
