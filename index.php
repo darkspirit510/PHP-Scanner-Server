@@ -133,7 +133,7 @@ function genIconLinks($config,$file,$isBulk){
 			'href'=>"print.php?file=$URL",
 			'onclick'=>$GLOBALS['Printer'] % 2 == 0?'return true':"return PDF_popup('$sJS',true)",
 			'target'=>'_blank',
-			'disable'=>isset($config->{'print'}),
+			'disable'=>isset($config->{'print'})||($GLOBALS['Printer'] % 2 == 0&&substr($URL,-4)=='tiff'),
 			'tip'=>'Print',
 			'bulk'=>$GLOBALS['Printer'] % 2 == 0?"bulkPrint(this)":"PDF_popup(filesLst,true)"
 		),
@@ -151,7 +151,7 @@ function genIconLinks($config,$file,$isBulk){
 		),
 		'view'=>(object)array(
 			'href'=>"index.php?page=View&amp;file=$URL",
-			'disable'=>isset($config->{'view'}),
+			'disable'=>isset($config->{'view'})||substr($URL,-4)=='tiff',
 			'tip'=>'View',
 			'bulk'=>"bulkView(this)"
 		),
@@ -257,14 +257,23 @@ function debugMsg($msg){// Good for printing a quick message during testing
 	Print_Message("Debug Message",$msg,'center');
 }
 
-function findLangs(){
-	$tess="/usr/share/tesseract-ocr/tessdata";// This is where tesseract stores it language files
-	$langs="/usr/share/doc";// This is where documentation is stored
-	if(is_dir($tess)){
+function findLangs(){// This tries 3 methods
+	$tess="/usr/share/tesseract-ocr";// This is where tesseract stores it language files
+	$doc="/usr/share/doc";// This is where documentation is stored
+
+	$langs=substr(exe("tesseract --list-langs",true),0,-1);// Asking the software what it has to work with seems like a good idea
+	if(substr($langs,0,27)=='List of available languages'){
+		$langs=explode("\n",$langs);
+		$langs=array_slice($langs,1);
+	}
+	else
 		$langs=array();
+	// Just in case this there is a old version in use that can't provide that info
+	if(is_dir($tess)&&count($langs)==0){// Find installed language packs by checked for the files
+		$tess="$tess/".(is_dir("$tess/tessdata")?'':substr(exe("ls ".shell($tess)." | tail -1",true),0,-1)).'/tessdata';// Find tessdata folder
 		$tess=scandir($tess);
 		for($i=2,$max=count($tess);$i<$max;$i++){
-			$pos=strpos($tess[$i],'.');
+			$pos=strpos($tess[$i],'.traineddata');
 			if($pos){
 				$tess[$i]=substr($tess[$i],0,strpos($tess[$i],'.',$pos));
 				if(!in_array($tess[$i],$langs)){
@@ -273,13 +282,12 @@ function findLangs(){
 			}
 		}
 	}
-	else if(is_dir($langs)){
-		$langs=explode("\n",substr(exe("ls ".shell($langs)." | grep 'tesseract-ocr-' | sed 's/tesseract-ocr-//'",true),0,-1));
+	if(is_dir($doc)&&count($langs)==0){// Find installed language packs by checking installed documentations files
+		$langs=substr(exe("ls ".shell($doc)." | grep 'tesseract-ocr-' | sed 's/tesseract-ocr-//'",true),0,-1);
+		$langs=strlen($langs)>0?explode("\n",$langs):array();
 	}
-	else{
-		Print_Message("Tesseract Error:","Unable to find any installed language files or documentation.<br/>You can edit lines 145 and or 146 of <code>".getcwd()."/index.php</code> with the correct location for your system.","center");
-		$langs=array();
-	}
+	if(count($langs)==0)
+		Print_Message("Tesseract Error:","Unable to find any installed language files or documentation.<br/>You can edit lines 261 and or 262 of <code>".getcwd()."/index.php</code> with the correct location for your system.","center");
 	return $langs;
 }
 
@@ -435,8 +443,8 @@ else if($PAGE=="Printer"){
 				echo '<li>'.html($key).' <a href="index.php?page=Printer&amp;action=List&amp;delete='.html($key).'" class="del icon tool right"><span class="tip">Remove '.html($key).'</span></a><ul>';
 					echo '<li>Location<ul><input name="'.html($key).'" value="'.(isset($json->{"locations"}->{$key})?$json->{"locations"}->{$key}:'').'"/><input type="submit" value="Set"/></ul></li>';
 					for($i=count($val)-1;$i>-1;$i=$i-1){
-						echo "<li>".$val[$i]->{"name"}.
-								"<ul>".implode(", ",$val[$i]->{"value"})."</ul>".
+						echo "<li>".html($val[$i]->{"name"})." (".html($val[$i]->{"default"}).
+								")<ul>".html(implode(", ",$val[$i]->{"value"}))."</ul>".
 							"</li>";
 					}
 				echo "</ul></li>";
@@ -550,7 +558,7 @@ else if($PAGE=="Config"){
 
 	Footer('');
 
-	if($ACTION=="Search-For-Printers"&&$Printer>0){ # Find avalible printers on the system
+	if($ACTION=="Search-For-Printers"&&$Printer>0){ # Find available printers on the system
 		unset($file);
 		include('res/printer.php');
 		$json=(object)array();
@@ -570,6 +578,15 @@ else if($PAGE=="Config"){
 						break;
 					}
 				}
+				if($name[0]=='PageSize'){// Remove CLI option: Custom.WIDTHxHEIGHT
+					for($y=count($values)-1;$y>-1;$y=$y-1){
+						if($values[$y]=='Custom.WIDTHxHEIGHT'){
+							unset($values[$y]);
+							$values=array_values($values);
+							break;
+						}
+					}
+				}
 				array_push($arr,
 					(object)array(
 						"name"=>$name[1],
@@ -586,13 +603,13 @@ else if($PAGE=="Config"){
 			if(SaveFile("config/printers.json",json_encode($json)))
 				Print_Message('Success',count($list).' Printer(s) have been found and configured.<br/><ul style="text-align:left"><li>'.implode("</li><li>",$list).'</li></ul>','center');
 			else
-				Print_Message('Failure','Bad news: <code>'.$user.'</code> does not have permission to write files to the <code>'.html(getcwd()).'/config</code> folder.','cetner');
+				Print_Message('Failure','Bad news: <code>'.$user.'</code> does not have permission to write files to the <code>'.html(getcwd()).'/config</code> folder.','center');
 		}
 		else
 			Print_Message('Error','No printers found!!!<br/>Please go to your <a href="http://'.$_SERVER['HTTP_HOST'].':631">CUPS</a> configuration to setup printers.','center');
 	}
-	else if($ACTION=="Search-For-Scanners"){ # Find avalible scanners on the system
-		/*$OP=json_decode( // Double quotes in varables break this
+	else if($ACTION=="Search-For-Scanners"){ // Find available scanners on the system
+		/*$OP=json_decode( // Double quotes in variables break this
 			"[".substr(
 				exe('scanimage -f "{\\"ID\\":%i,\\"INUSE\\":0,\\"DEVICE\\":\\"%d\\",\\"NAME\\":\\"%v %m %t\\"},"',true),
 				0,
@@ -956,8 +973,8 @@ else if($PAGE=="Edit"){
 				if(file_exists("scans/file/Scan_$file")){
 					$langs=findLangs();
 					if(!validNum(Array($WIDTH,$HEIGHT,$X_1,$Y_1,$BRIGHT,$CONTRAST,$SCALE,$ROTATE))||
-					  ($FILETYPE!=="txt"&&$FILETYPE!=="png"&&$FILETYPE!=="tiff"&&$FILETYPE!=="jpg")||
-					  !in_array($LANG,$langs)){
+					  (!in_array($FILETYPE,array("txt","png","tiff","jpg")))||
+					  (!in_array($LANG,$langs))&&$LANG!=''){
 						Print_Message("No, you can not do that","Input data is invalid and most likely an attempt to run malicious code on the server <i>denied</i>",'center');
 						Footer('');
 						quit();
@@ -972,14 +989,14 @@ else if($PAGE=="Edit"){
 					$file=shell($fileRaw);
 					if($MODE!='color'&&$MODE!=null){
 						if($MODE=='gray')
-							exe("convert $tmpFile -colorspace Gray $tmpFile",true);
+							exe("convert -verbose $tmpFile -colorspace Gray $tmpFile",true);
 						else if($MODE=='negate')
-							exe("convert $tmpFile -negate $tmpFile",true);
+							exe("convert -verbose $tmpFile -negate $tmpFile",true);
 						else
-							exe("convert $tmpFile -monochrome $tmpFile",true);
+							exe("convert -verbose $tmpFile -monochrome $tmpFile",true);
 					}
 					if($BRIGHT!="0"||$CONTRAST!="0"){
-						exe("convert $tmpFile -brightness-contrast $BRIGHT".'x'."$CONTRAST $tmpFile",true);
+						exe("convert -verbose $tmpFile -brightness-contrast $BRIGHT".'x'."$CONTRAST $tmpFile",true);
 					}
 					if($WIDTH!="0"&&$HEIGHT!="0"&&$WIDTH!=null&&$HEIGHT!=null){
 						$TRUE=explode("x",exe("identify -format '%wx%h' $file",true));
@@ -989,16 +1006,16 @@ else if($PAGE=="Edit"){
 						$HEIGHT=round($HEIGHT/$M_HEIGHT*$TRUE_H);
 						$X_1=round($X_1/$M_WIDTH*$TRUE_W);
 						$Y_1=round($Y_1/$M_HEIGHT*$TRUE_H);
-						exe("convert $tmpFile +repage -crop '$WIDTH x $HEIGHT + $X_1 + $Y_1' $tmpFile",true);
+						exe("convert -verbose $tmpFile +repage -crop '$WIDTH x $HEIGHT + $X_1 + $Y_1' $tmpFile",true);
 					}
 
 					if($SCALE!="100"){
-						exe("convert $tmpFile -scale '$SCALE%' $tmpFile",true);
+						exe("convert -verbose $tmpFile -scale '$SCALE%' $tmpFile",true);
 					}
 					if($ROTATE!="0"){
-						exe("convert $tmpFile -rotate $ROTATE $tmpFile",true);
+						exe("convert -verbose $tmpFile -rotate $ROTATE $tmpFile",true);
 					}
-					exe("convert $tmpFile -alpha off $tmpFile",true);
+					exe("convert -verbose $tmpFile -alpha off $tmpFile",true);
 					$file=substr($fileRaw,16);
 					$edit=strpos($file,'-edit-');
 					$name=(is_bool($edit)?substr($file,0,-4):substr($file,0,$edit));
@@ -1007,8 +1024,8 @@ else if($PAGE=="Edit"){
 					while(file_exists("scans/thumb/Preview_$name-edit-$int.jpg")){
 						$int++;
 					}
-					$file="scans/file/Scan_$name-edit-$int.$ext";//scan
-					$name=str_replace("file/Scan_","thumb/Preview_",$file);//preview
+					$file="scans/file/Scan_$name-edit-$int.$ext";// Scan
+					$name=str_replace("file/Scan_","thumb/Preview_",$file);// Preview
 					if($FILETYPE==substr($file,strrpos($file,'.')+1)){
 						@rename($tmpFileRaw,$file);// Incorrect access denied message is generated
 						if(file_exists($tmpFileRaw)&&!file_exists($file)){// Just in-case it becomes accurate
@@ -1018,26 +1035,29 @@ else if($PAGE=="Edit"){
 					}
 					else if($FILETYPE!='txt'){
 						$file=substr($file,0,strrpos($file,'.')+1).$FILETYPE;
-						exe("convert $tmpFile ".shell($file),true);
+						exe("convert -verbose $tmpFile ".shell($file),true);
 					}
 					else{
 						$t=time();
 						$S_FILENAMET=substr($file,0,strrpos($file,'.'));
-						exe("convert $tmpFile -fx '(r+g+b)/3' ".shell("/tmp/edit_scan_file$t.tif"),true);
-						exe("tesseract ".shell("/tmp/edit_scan_file$t.tif").' '.shell($S_FILENAMET)." -l ".shell($LANG),true);
+						exe("convert -verbose $tmpFile -fx '(r+g+b)/3' ".shell("/tmp/edit_scan_file$t.tif"),true);
+						exe("tesseract ".shell("/tmp/edit_scan_file$t.tif").' '.shell($S_FILENAMET).($LANG==''?'':" -l ".shell($LANG)),true);
 						unlink("/tmp/edit_scan_file$t.tif");
-						if(!file_exists("$S_FILENAMET.txt"))//In case tesseract fails
+						if(!file_exists("$S_FILENAMET.txt"))// In case tesseract fails
 							SaveFile("$S_FILENAMET.txt","");
 					}
-					$FILE=substr($name,0,strrpos($name,'.')+1).'jpg';//Preview
+					$FILE=substr($name,0,strrpos($name,'.')+1).'jpg';// Preview
 					if($FILETYPE!='txt'){
-						exe("convert ".shell($file)." -scale '450x471' ".shell($FILE),true);
+						exe("convert -verbose ".shell($file)." -scale '450x471' ".shell($FILE),true);
 						$file=substr($file,16);
 					}
 					else{
-						exe("convert $tmpFile -scale '450x471' ".shell($FILE),true);
+						exe("convert -verbose $tmpFile -scale '450x471' ".shell($FILE),true);
 						unlink($tmpFileRaw);
-						$file=substr($file,16,strrpos($file,'.')-10).'txt';
+						$file=substr($file,16,strrpos($file,'.')-15).'txt';
+					}
+					if(file_exists($tmpFileRaw)){
+						unlink($tmpFileRaw);
 					}
 				}
 			}
@@ -1063,7 +1083,7 @@ else if($PAGE=="Edit"){
 				if($FILES[$i]=='.'||$FILES[$i]=='..')
 					continue;
 				$FILE=substr($FILES[$i],7,-3);
-				$FILE=substr(exe("cd 'scans/file/'; ls ".shell("Scan$FILE").'*',true),5);//Should only have one file listed
+				$FILE=substr(exe("cd 'scans/file/'; ls ".shell("Scan$FILE").'*',true),5);// Should only have one file listed
 				$IMAGE=$FILES[$i];
 				include "res/inc/editscans.php";
 			}
@@ -1080,7 +1100,7 @@ else{
 	$CANNERS=json_decode(file_exists("config/scanners.json")?file_get_contents("config/scanners.json"):'[]');
 	if(strlen($SAVEAS)>0||$ACTION=="Scan Image"){
 		$langs=findLangs();
-		if(!validNum(Array($SCANNER,$BRIGHT,$CONTRAST,$SCALE,$ROTATE))||!in_array($LANG,$langs)||!in_array($QUALITY,explode("|",$CANNERS[$SCANNER]->{"DPI-$SOURCE"}))){//security check
+		if(!validNum(Array($SCANNER,$BRIGHT,$CONTRAST,$SCALE,$ROTATE))||(!in_array($LANG,$langs)&&$LANG!='')||!in_array($QUALITY,explode("|",$CANNERS[$SCANNER]->{"DPI-$SOURCE"}))){// Security check
 			Print_Message("No, you can not do that","Input data is invalid and most likely an attempt to run malicious code on the server <i>denied</i>",'center');
 			Footer('');
 			quit();
@@ -1162,7 +1182,7 @@ else{
 		   (!in_array($MODE,explode('|',$CANNERS[$SCANNER]->{"MODE-$SOURCE"})))||
 		   (!in_array($SOURCE,explode('|',$CANNERS[$SCANNER]->{"SOURCE"})))||
 		   (!in_array($DUPLEX,is_bool($CANNERS[$SCANNER]->{"DUPLEX-$SOURCE"})?array(true,false):explode('|',$CANNERS[$SCANNER]->{"DUPLEX-$SOURCE"})))||
-		   ($FILETYPE!=="txt"&&$FILETYPE!=="png"&&$FILETYPE!=="tiff"&&$FILETYPE!=="jpg")){
+		   !in_array($FILETYPE,array("txt","png","tiff","jpg"))){
 			Print_Message("No, you can not do that","Input data is invalid and most likely an attempt to run malicious code on the server. <i>Denied</i>",'center');
 			quit();
 		}
@@ -1217,7 +1237,7 @@ else{
 			$SIZE_X=$scanner_w;
 			$SIZE_Y=$scanner_h;
 		}
-		else if($sizes[0]<=$scanner_w&&$sizes[1]<=$scanner_h&&$sizes[1]<=$scanner_w&&$sizes[0]<=$scanner_h){// fits both ways
+		else if($sizes[0]<=$scanner_w&&$sizes[1]<=$scanner_h&&$sizes[1]<=$scanner_w&&$sizes[0]<=$scanner_h){// Fits both ways
 			if($ORNT!="vert"){
 				$SIZE_X=$sizes[1];
 				$SIZE_Y=$sizes[0];
@@ -1227,11 +1247,11 @@ else{
 				$SIZE_Y=$sizes[1];
 			}
 		}
-		else if($sizes[0]<=$scanner_w&&$sizes[1]<=$scanner_h){//fits tall way
+		else if($sizes[0]<=$scanner_w&&$sizes[1]<=$scanner_h){// Fits tall way
 			$SIZE_X=$sizes[0];
 			$SIZE_Y=$sizes[1];
 		}
-		else if($sizes[1]<=$scanner_w&&$sizes[0]<=$scanner_h){//fits wide way
+		else if($sizes[1]<=$scanner_w&&$sizes[0]<=$scanner_h){// Fits wide way
 			$SIZE_X=$sizes[1];
 			$SIZE_Y=$sizes[0];
 		}
@@ -1311,38 +1331,38 @@ else{
 			# Adjust Brightness
 			if($BRIGHT!="0"||$CONTRAST!="0"){
 				if($MODE=='Lineart'){
-					exe("convert $SCAN -brightness-contrast '$BRIGHT".'x'."$CONTRAST' -depth 16 $SCAN",true);
-					exe("convert $SCAN -monochrome -depth 1 $SCAN",true);
+					exe("convert -verbose $SCAN -brightness-contrast '$BRIGHT".'x'."$CONTRAST' -depth 16 $SCAN",true);
+					exe("convert -verbose $SCAN -monochrome -depth 1 $SCAN",true);
 				}
 				else{
-					exe("convert $SCAN -brightness-contrast '$BRIGHT".'x'."$CONTRAST' $SCAN",true);
+					exe("convert -verbose $SCAN -brightness-contrast '$BRIGHT".'x'."$CONTRAST' $SCAN",true);
 				}
 			}
 
 			# Rotate Image
 			if($ROTATE!="0"){
-				exe("convert $SCAN -rotate '$ROTATE' $SCAN",true);
+				exe("convert -verbose $SCAN -rotate '$ROTATE' $SCAN",true);
 			}
 
 			# Scale Image
 			if($SCALE!="100"){
-				exe("convert $SCAN -scale '$SCALE%' $SCAN",true);
+				exe("convert -verbose $SCAN -scale '$SCALE%' $SCAN",true);
 			}
 
 			# Generate Preview Image
-			exe("convert $SCAN -scale '450x471' ".shell("scans/thumb/$P_FILENAME"),true);
+			exe("convert -verbose $SCAN -scale '450x471' ".shell("scans/thumb/$P_FILENAME"),true);
 
 			# Convert scan to file type
 			if($FILETYPE=="txt"){
 				$S_FILENAMET=substr($S_FILENAME,0,strrpos($S_FILENAME,'.'));
-				exe("convert $SCAN -fx '(r+g+b)/3' ".shell("/tmp/_scan_file$SCANNER.tif"),true);
-				exe("tesseract ".shell("/tmp/_scan_file$SCANNER.tif").' '.shell("scans/file/$S_FILENAMET")." -l ".shell($LANG),true);
+				exe("convert -verbose $SCAN -fx '(r+g+b)/3' ".shell("/tmp/_scan_file$SCANNER.tif"),true);
+				exe("tesseract ".shell("/tmp/_scan_file$SCANNER.tif").' '.shell("scans/file/$S_FILENAMET").($LANG==''?'':" -l ".shell($LANG)),true);
 				unlink("/tmp/_scan_file$SCANNER.tif");
 				if(!file_exists("scans/file/$S_FILENAMET.txt"))//in case tesseract fails
 					SaveFile("scans/file/$S_FILENAMET.txt","");
 			}
 			else{
-				exe("convert $SCAN -alpha off ".shell("scans/file/$S_FILENAME"),true);
+				exe("convert -verbose $SCAN -alpha off ".shell("scans/file/$S_FILENAME"),true);
 			}
 			@unlink("$CANDIR/".$files[$i]);
 		}

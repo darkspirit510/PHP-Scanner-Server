@@ -8,12 +8,11 @@ function Set_Cookie( name, value, expires, path, domain, secure ){
 		expires = expires * 1000 * 60 * 60 * 24;
 	}
 	var expires_date = new Date( today.getTime() + (expires) );
-
 	document.cookie = name + "=" +escape( value ) +
 		( ( expires ) ? ";expires=" + expires_date.toGMTString() : "" ) +
 		( ( path ) ? ";path=" + path : "" ) +
 		( ( domain ) ? ";domain=" + domain : "" ) +
-		( ( secure ) ? ";secure" : "" );
+		( ( secure ) ? ";secure" : ";samesite=strict" );
 }
 function Delete_Cookie( name, path ) {// edited, don't delete non-existent cookies
 	if(!path) path=window.location.pathname.substr(0,window.location.pathname.lastIndexOf('/')+1);// Added this line

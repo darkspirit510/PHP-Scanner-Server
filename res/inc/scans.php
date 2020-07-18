@@ -47,17 +47,16 @@ else{
 		'<button onclick="return selectScans(false);">Invert Selection</button> '.
 		'<button onclick="return selectScans(\'included\');">Select None</button>'.
 		'</p></div>';
-	//$FILES=explode("\n",substr(exe("cd 'scans/thumb'; ls -t 'Preview'*",true),0,-1));// seems to be slower
-	$FILES=scandir('scans/thumb');
+	$FILES=scandir('scans/file');
 	$i=array();
 	foreach($FILES as $FILE){
 		if($FILE=='.'||$FILE=='..')
 			continue;
-		$i[$FILE]=filemtime("scans/thumb/$FILE");
+		$i[$FILE]=filemtime("scans/file/$FILE");
 	}
 	arsort($i);
 	$FILES=array_keys($i);
-	echo '<div id="scans">';
+	echo '<div id="scans" class="columns">';
 	$filter=Get_Values('filter');
 	if(!is_null($filter)){
 		$origin=Get_Values('origin');
@@ -102,31 +101,27 @@ else{
 					continue;
 			}
 			if($filter===2){
-				if(filemtime("scans/thumb/$FILE")<$time)
+				if(filemtime("scans/file/$FILE")<$time)
 					continue;
 			}
 			else if($filter===1){
-				if(filemtime("scans/thumb/$FILE")>$time)
+				if(filemtime("scans/file/$FILE")>$time)
 					continue;
 			}
 			else if($filter===3){
-				if(!(filemtime("scans/thumb/$FILE")>$time[1]&&filemtime("scans/thumb/$FILE")<$time[0]))
+				if(!(filemtime("scans/file/$FILE")>$time[1]&&filemtime("scans/file/$FILE")<$time[0]))
 					continue;
 			}
 		}
-		$FILE=substr($FILE,7,-3);
-		$FILE=substr(exe("cd 'scans/file'; ls ".shell("Scan$FILE").'*',true),5,-1);//Should only have one file listed
-		$IMAGE=$FILES[$i];
+		$FILE=substr($FILE,5);
+		$IMAGE=strlen(substr($FILES[$i],strrpos($FILES[$i],'.')));// char count of file extension +1
+		$IMAGE="Preview".substr($FILES[$i],4,$IMAGE*-1).".jpg";
 		echo '<div class="box" id="'.html($FILE).'">'.
 			'<h2 ondblclick="toggleFile(this);" class="excluded">'.html($FILE).'</h2><p><span>'.
 			genIconLinks(null,"Scan_$FILE",false).'</span><br/>'.
 			'<a class="tool" target="_blank" href="scans/file/Scan_'.url($FILE).'" style="width:100%;"><img src="scans/thumb/'.url($IMAGE).'" alt="'.html($FILE).'" style="width:100%"/><span class="tip">View raw file</span></a>'.
 			'</p></div>';
 	}
-	echo '</div><script type="text/javascript">'. // Also see paper.php line 78
-		'if(typeof document.body.style.MozColumnGap=="string")'.
-			'getID("scans").className="columns";'.// At least someone knows how to do something right (Firefox > Edge/IE > Chrome)
-		'else '.
-			'enableColumns("scans",null,'.(isset($_COOKIE["columns"])?'true':'false').');</script>';
+	echo '</div>';
 }
 ?>
